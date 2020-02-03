@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:data_application/common/Constants.dart';
 import 'package:data_application/common/UserPreferences.dart';
+import 'package:data_application/model/class_model.dart';
 import 'package:data_application/model/institute.dart';
 import 'package:data_application/model/notification_model.dart';
 import 'package:flutter/cupertino.dart';
@@ -19,17 +20,15 @@ class DashboardListState extends State<DashboardList> {
   String items = "true";
   List<NotificationModel> lis = List();
   var isLoading = false;
-  Institute _selectClass;
-  List<DropdownMenuItem<Institute>> _dropDownMenuItemsClass;
-  List<Institute> classlist = List();
+  ClassModel _selectClass;
+  List<DropdownMenuItem<ClassModel>> _dropDownMenuItemsClass;
+  List classlist =  ClassModel.getCompanies();
 
   @override
   Future initState() {
     super.initState();
     getData();
     showdata();
-    classlist.add( Institute(id: '1',name: 'select Class',city: '',state:'',country:'',pincode:'' ,address:'' ));
-    classlist.add( Institute(id: '2',name: '10',city: '',state:'',country:'',pincode:'' ,address:'' ));
 
     _dropDownMenuItemsClass = buildAndGetDropDownMenuItemsClass(classlist);
     _selectClass = _dropDownMenuItemsClass[0].value;
@@ -43,15 +42,13 @@ class DashboardListState extends State<DashboardList> {
       email = prefs.getString(UserPreferences.USER_EMAIL).toString();
     });
   }
-
-
-  List<DropdownMenuItem<Institute>> buildAndGetDropDownMenuItemsClass(List institute) {
-    List<DropdownMenuItem<Institute>> items = new List();
-    for (Institute i in institute) {
+  List<DropdownMenuItem<ClassModel>> buildAndGetDropDownMenuItemsClass(List institute) {
+    List<DropdownMenuItem<ClassModel>> items = new List();
+    for (ClassModel i in institute) {
       items.add(
         DropdownMenuItem(
           value: i,
-          child: Text(i.name),
+          child: Text(i.Name),
         ),
       );
     }
@@ -83,14 +80,11 @@ class DashboardListState extends State<DashboardList> {
       print(e.toString());
     }
   }
-
-
-  void changedDropDownItemClass(Institute selectedFruit) {
+  void changedDropDownItemClass(ClassModel selectedFruit) {
     setState(() {
       _selectClass = selectedFruit;
     });
   }
-
 
   @override
   Widget build(BuildContext context) {

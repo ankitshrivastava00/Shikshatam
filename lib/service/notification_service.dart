@@ -1,10 +1,7 @@
 import 'package:data_application/activity/home.dart';
 import 'package:data_application/activity/login.dart';
-import 'package:data_application/activity/notification_list.dart';
-import 'package:data_application/authenticate/authenticate.dart';
 import 'package:data_application/common/Constants.dart';
 import 'package:data_application/model/user.dart';
-import 'package:data_application/service/databaseService.dart';
 import 'package:data_application/teacher_screens/teacher_home.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';

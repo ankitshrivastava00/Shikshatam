@@ -120,9 +120,8 @@ class StudentDetailsState extends State<StudentDetails> {
                 status: f.data['status']));
           }
           }
-
-        }  );
-
+        }
+        );
         foo();
       });
 
@@ -157,14 +156,7 @@ class StudentDetailsState extends State<StudentDetails> {
     return new Scaffold(
       body:
       new Container(
-        child:isLoading ? Center(
-            child: new Container(
-              child:
-              CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation(Colors.green),
-                strokeWidth: 5.0,
-                semanticsLabel: 'is Loading',),
-            )
-        ):
+        child:
         new SingleChildScrollView(
           child:
           new Padding
@@ -193,7 +185,14 @@ class StudentDetailsState extends State<StudentDetails> {
                       ),
                     ),
                   ),
-
+                  isLoading ? Center(
+                      child: new Container(
+                        child:
+                        CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation(Colors.green),
+                          strokeWidth: 5.0,
+                          semanticsLabel: 'is Loading',),
+                      )
+                  ):
                   ListView.builder(
                     physics: PageScrollPhysics(),
                     shrinkWrap: true,
