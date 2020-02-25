@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_functions/cloud_functions.dart';
 import 'package:data_application/common/Constants.dart';
+import 'package:data_application/common/CustomProgressDialog.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/model/class_model.dart';
 import 'package:data_application/model/institute.dart';
@@ -16,13 +18,17 @@ class DashboardList extends StatefulWidget {
 }
 
 class DashboardListState extends State<DashboardList> {
-  String reply = "", status = "",name,email;
+  String reply = "", status = "",name,token,email;
   String items = "true";
   List<NotificationModel> lis = List();
   var isLoading = false;
   ClassModel _selectClass;
   List<DropdownMenuItem<ClassModel>> _dropDownMenuItemsClass;
+  TextEditingController emailController = new TextEditingController();
+
   List classlist =  ClassModel.getCompanies();
+  String _response = 'no response';
+  int _responseCount = 0;
 
   @override
   Future initState() {
@@ -40,6 +46,7 @@ class DashboardListState extends State<DashboardList> {
     setState(() {
       name = prefs.getString(UserPreferences.USER_NAME).toString();
       email = prefs.getString(UserPreferences.USER_EMAIL).toString();
+      token = prefs.getString(UserPreferences.USER_FCM).toString();
     });
   }
   List<DropdownMenuItem<ClassModel>> buildAndGetDropDownMenuItemsClass(List institute) {
@@ -68,7 +75,7 @@ class DashboardListState extends State<DashboardList> {
           .getDocuments()
           .then((QuerySnapshot snapshot) {
         snapshot.documents.forEach((f) =>
-            lis.add(NotificationModel(title: f.data['title'],description: f.data['description'] )));
+            lis.add(NotificationModel(title: f.data['title'].toString(),description: f.data['description'].toString() )));
 
         setState(() {
           isLoading = false;
@@ -88,6 +95,16 @@ class DashboardListState extends State<DashboardList> {
 
   @override
   Widget build(BuildContext context) {
+    Constants.applicationContext =context;
+
+    final HttpsCallable callable = CloudFunctions.instance
+        .getHttpsCallable(functionName: 'addUser')
+      ..timeout = const Duration(seconds: 30);
+
+    final HttpsCallable sendNotification = CloudFunctions.instance
+        .getHttpsCallable(functionName: 'sendNotification')
+      ..timeout = const Duration(seconds: 30);
+
     return new Scaffold(
       body:
       new Container(
@@ -129,7 +146,7 @@ class DashboardListState extends State<DashboardList> {
 
                                         new Text('${url.title}',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 20.0),textAlign: TextAlign.center,),
                                         SizedBox(height: 15.0,),
-                                        new Text('Description : ${url.description}',style: TextStyle(color: Colors.white),textAlign: TextAlign.center,),
+                                        new Text('${url.description}',style: TextStyle(color: Colors.white),textAlign: TextAlign.center,),
 
                                       ],
                                     ),
@@ -174,6 +191,7 @@ class DashboardListState extends State<DashboardList> {
                       new Container(
                           padding: EdgeInsets.all(40.0),
                           child: new TextField(
+                            controller: emailController,
                             decoration: InputDecoration(hintText: Constants.NOTIFICATION_HINT,
                               border: InputBorder.none,),
                             textAlign: TextAlign.center,
@@ -190,8 +208,84 @@ class DashboardListState extends State<DashboardList> {
                     color: Colors.green,
                     textColor: Colors.white,
                     padding: EdgeInsets.all(8.0),
-                    onPressed: () {
+                    onPressed: () async {
 
+                      try {
+                        if ('select Class'==_selectClass.Name) {
+                          Fluttertoast.showToast(
+                              msg: "Select Class",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIos: 1,
+                              backgroundColor: Colors.grey,
+                              textColor: Colors.white,
+                              fontSize: 16.0);
+                        } else if (emailController.text.isEmpty) {
+                          Fluttertoast.showToast(
+                              msg: "Field Empty",
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIos: 1,
+                              backgroundColor: Colors.grey,
+                              textColor: Colors.white,
+                              fontSize: 16.0);
+                        } else  {
+                          CustomProgressLoader.showLoader(Constants.applicationContext);
+
+
+
+                          final HttpsCallableResult result1 = await sendNotification
+                              .call(
+                            <String, dynamic>{
+                              'fcm': '${token}',
+                              'classno': '${_selectClass.Name}',
+                              'title': '${Constants.APPLICATION_NAME}',
+                              'description': emailController.text,
+                            },
+                          );
+
+                          print(result1.data);
+
+                          final HttpsCallableResult result = await callable
+                              .call(
+                            <String, dynamic>{
+                              'classno': '${_selectClass.Name}',
+                              'title': '${Constants.APPLICATION_NAME}',
+                              'description': emailController.text,
+                            },
+                          );
+
+                          print(result.data);
+                          setState(() {
+                            _response = result.data['repeat_message'];
+                            _responseCount = result.data['repeat_count'];
+                          });
+                          CustomProgressLoader.cancelLoader(context);
+
+                        }
+
+
+                      } on CloudFunctionsException catch (e) {
+                        print('caught firebase functions exception');
+                        print(e.code);
+                        print(e.message);
+                        print(e.details);
+                        CustomProgressLoader.cancelLoader(Constants.applicationContext);
+
+                      } catch (e) {
+                        print('caught generic exception');
+                        print(e);
+                        CustomProgressLoader.cancelLoader(Constants.applicationContext);
+
+                      }
+
+                     /* CloudFunctions.instance.call(
+                          functionName: "addUser",
+                          parameters: {
+                            "name": 'Testts',
+                            "email": "sdhshfhsdf"
+                          }
+                      );*/
                     },
                     child: Text(
                       "Send Notification".toUpperCase(),

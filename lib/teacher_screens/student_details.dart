@@ -152,6 +152,7 @@ class StudentDetailsState extends State<StudentDetails> {
   }
   @override
   Widget build(BuildContext context) {
+    Constants.applicationContext =context;
 
     return new Scaffold(
       body:

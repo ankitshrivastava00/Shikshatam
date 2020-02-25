@@ -131,6 +131,8 @@ class StudentFeedbackState extends State<StudentFeedback> {
 
   @override
   Widget build(BuildContext context) {
+    Constants.applicationContext =context;
+
     return new Scaffold(
       body:
       new Container(

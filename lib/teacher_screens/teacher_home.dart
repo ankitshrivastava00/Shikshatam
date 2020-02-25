@@ -1,3 +1,4 @@
+import 'package:data_application/common/Constants.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/teacher_screens/dashboard.dart';
 import 'package:data_application/teacher_screens/logout.dart';
@@ -74,6 +75,8 @@ class TeacherHomePageState extends State<TeacherHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    Constants.applicationContext =context;
+
     var drawerOptions = <Widget>[];
     for (var i = 0; i < widget.drawerItems.length; i++) {
       var d = widget.drawerItems[i];

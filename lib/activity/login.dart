@@ -24,8 +24,6 @@ class _LoginState extends State<Login> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
   final formKey = GlobalKey<FormState>();
   String userId;
-  TextEditingController emailController = new TextEditingController();
-  TextEditingController passwordController = new TextEditingController();
   String  token;
   SharedPreferences prefs;
   String _mobile, _password;

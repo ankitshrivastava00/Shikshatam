@@ -1,4 +1,5 @@
 import 'package:data_application/activity/login.dart';
+import 'package:data_application/common/Constants.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/service/auth.dart';
 import 'package:flutter/material.dart';
@@ -32,6 +33,8 @@ class _LogoutState extends State<Logout> {
 
   @override
   Widget build(BuildContext context) {
+    Constants.applicationContext =context;
+
     // TODO: implement build
     return Scaffold(
       backgroundColor: Colors.white,

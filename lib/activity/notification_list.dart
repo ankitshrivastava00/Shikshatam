@@ -34,7 +34,7 @@ class NotificationListState extends State<NotificationList> {
           .getDocuments()
           .then((QuerySnapshot snapshot) {
         snapshot.documents.forEach((f) =>
-            lis.add(NotificationModel(title: f.data['title'],description: f.data['description'] )));
+            lis.add(NotificationModel(title: f.data['title'].toString(),description: f.data['description'].toString() )));
 
         setState(() {
           isLoading = false;
@@ -49,6 +49,8 @@ class NotificationListState extends State<NotificationList> {
 
   @override
   Widget build(BuildContext context) {
+    Constants.applicationContext =context;
+
     return new Scaffold(
         body:
         new Container(
