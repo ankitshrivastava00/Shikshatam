@@ -25,7 +25,11 @@ class DashboardListState extends State<DashboardList> {
   ClassModel _selectClass;
   List<DropdownMenuItem<ClassModel>> _dropDownMenuItemsClass;
   TextEditingController emailController = new TextEditingController();
+  HttpsCallable sendNotification,callable;
+  List<Institute> list = List();
+  List<DropdownMenuItem<Institute>> _dropDownMenuItems;
 
+  Institute _selectedFruit;
   List classlist =  ClassModel.getCompanies();
   String _response = 'no response';
   int _responseCount = 0;
@@ -35,20 +39,99 @@ class DashboardListState extends State<DashboardList> {
     super.initState();
     getData();
     showdata();
+    getInstitute();
+    callable = CloudFunctions.instance
+        .getHttpsCallable(functionName: 'addUser')
+      ..timeout = const Duration(seconds: 30);
+
+     sendNotification = CloudFunctions.instance
+        .getHttpsCallable(functionName: 'sendNotification')
+      ..timeout = const Duration(seconds: 30);
+
+
 
     _dropDownMenuItemsClass = buildAndGetDropDownMenuItemsClass(classlist);
     _selectClass = _dropDownMenuItemsClass[0].value;
 
   }
 
+
+  void getInstitute() {
+    try{
+      setState(() {
+        isLoading = true;
+      });
+
+      list.add( Institute(id: '1',name: 'select Institute',city: '',state:'',country:'',pincode:'' ,address:'' ));
+
+      Firestore.instance
+          .collection(Constants.INSTITUTE_TABLE)
+          .getDocuments()
+          .then((QuerySnapshot snapshot) {
+        snapshot.documents.forEach((f) =>
+            list.add( Institute(id: f.data['id'],name: f.data['name'],city: f.data['city'],state:f.data['state'],country:f.data['country'],pincode:f.data['pincode'] ,address:f.data['address'] )));
+
+        _dropDownMenuItems = buildAndGetDropDownMenuItems(list);
+
+
+        _selectedFruit = _dropDownMenuItems[0].value;
+
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+
+        });
+      });
+
+    }catch(e){
+      print(e.toString());
+    }
+  }
+
   Future showdata() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
     setState(() {
       name = prefs.getString(UserPreferences.USER_NAME).toString();
       email = prefs.getString(UserPreferences.USER_EMAIL).toString();
       token = prefs.getString(UserPreferences.USER_FCM).toString();
     });
   }
+  void getData() {
+
+    try{
+      if (!mounted) return;
+
+      setState(() {
+        isLoading = true;
+      });
+
+      Firestore.instance
+          .collection('notification')
+          .getDocuments()
+          .then((QuerySnapshot snapshot) {
+        snapshot.documents.forEach((f) =>
+            lis.add(NotificationModel(title: f.data['title'].toString(),description: f.data['description'].toString() )));
+        if (!mounted) return;
+
+        setState(() {
+          isLoading = false;
+
+        });
+      });
+
+    }catch(e){
+      print(e.toString());
+    }
+  }
+  void changedDropDownItemClass(ClassModel selectedFruit) {
+    if (!mounted) return;
+
+    setState(() {
+      _selectClass = selectedFruit;
+    });
+  }
+
   List<DropdownMenuItem<ClassModel>> buildAndGetDropDownMenuItemsClass(List institute) {
     List<DropdownMenuItem<ClassModel>> items = new List();
     for (ClassModel i in institute) {
@@ -63,48 +146,65 @@ class DashboardListState extends State<DashboardList> {
     return items;
   }
 
-  void getData() {
+  List<DropdownMenuItem<Institute>> buildAndGetDropDownMenuItems(List institute) {
+    List<DropdownMenuItem<Institute>> items = new List();
+    for (Institute i in institute) {
+      items.add(
+        DropdownMenuItem(
+          value: i,
+          child: Text(i.name),
+        ),
+      );
+    }
 
+    return items;
+  }
+
+
+@override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+  }
+  void changedDropDownItem(Institute selectedFruit) {
+    if (!mounted) return;
+
+    setState(() {
+      _selectedFruit = selectedFruit;
+    });
+  }
+
+  void getNotification_token(String ClassNo,String Institute){
     try{
-      setState(() {
-        isLoading = true;
-      });
-
       Firestore.instance
-          .collection('notification')
-          .getDocuments()
-          .then((QuerySnapshot snapshot) {
-        snapshot.documents.forEach((f) =>
-            lis.add(NotificationModel(title: f.data['title'].toString(),description: f.data['description'].toString() )));
-
-        setState(() {
-          isLoading = false;
-
-        });
+          .collection(Constants.USER_TABLE)
+          .where("classno", isEqualTo: '${ClassNo}' )
+          .snapshots()
+          .listen((data) {
+        data.documents.forEach((f) async{
+          if(_selectedFruit.name=='${f.data['institute']}' && 'user'=='${f.data['type']}'){
+            final HttpsCallableResult result1 = await sendNotification
+                .call(
+              <String, dynamic>{
+                'fcm': '${f.data['fcm_token']}',
+                'classno': '${_selectClass.Name}',
+                'title': '${Constants.APPLICATION_NAME}',
+                'description': emailController.text,
+              },
+            );
+            print(result1.data);
+        }
+        }
+        );
       });
-
     }catch(e){
       print(e.toString());
     }
-  }
-  void changedDropDownItemClass(ClassModel selectedFruit) {
-    setState(() {
-      _selectClass = selectedFruit;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     Constants.applicationContext =context;
-
-    final HttpsCallable callable = CloudFunctions.instance
-        .getHttpsCallable(functionName: 'addUser')
-      ..timeout = const Duration(seconds: 30);
-
-    final HttpsCallable sendNotification = CloudFunctions.instance
-        .getHttpsCallable(functionName: 'sendNotification')
-      ..timeout = const Duration(seconds: 30);
-
     return new Scaffold(
       body:
       new Container(
@@ -176,6 +276,21 @@ class DashboardListState extends State<DashboardList> {
                   ),
 
                   SizedBox(height: 20.0,),
+                  new Container(
+                    //padding:EdgeInsets.all(12.0),
+                    child: new SizedBox(
+                        width: double.infinity,
+                        //  child: new Center(
+                        child:  new DropdownButton(
+                          value: _selectedFruit,
+                          items: _dropDownMenuItems,
+                          onChanged: changedDropDownItem,
+                        )
+                      // ),
+                    ),
+                    // margin: EdgeInsets.only(left: 15.0),
+                  ),
+                  SizedBox(height: 20.0,),
 
                   SizedBox(
                     width:double.infinity ,
@@ -220,7 +335,18 @@ class DashboardListState extends State<DashboardList> {
                               backgroundColor: Colors.grey,
                               textColor: Colors.white,
                               fontSize: 16.0);
-                        } else if (emailController.text.isEmpty) {
+                        } else  if(_selectedFruit.name=="select Institute"){
+
+                          Fluttertoast.showToast(
+                              msg:
+                              Constants.INSTITUTE_VALIDATION,
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIos: 1,
+                              backgroundColor: Colors.grey,
+                              textColor: Colors.white,
+                              fontSize: 16.0);
+                        }else  if (emailController.text.isEmpty) {
                           Fluttertoast.showToast(
                               msg: "Field Empty",
                               toastLength: Toast.LENGTH_SHORT,
@@ -231,21 +357,7 @@ class DashboardListState extends State<DashboardList> {
                               fontSize: 16.0);
                         } else  {
                           CustomProgressLoader.showLoader(Constants.applicationContext);
-
-
-
-                          final HttpsCallableResult result1 = await sendNotification
-                              .call(
-                            <String, dynamic>{
-                              'fcm': '${token}',
-                              'classno': '${_selectClass.Name}',
-                              'title': '${Constants.APPLICATION_NAME}',
-                              'description': emailController.text,
-                            },
-                          );
-
-                          print(result1.data);
-
+                          getNotification_token('${_selectClass.Name}','${_selectedFruit.name}');
                           final HttpsCallableResult result = await callable
                               .call(
                             <String, dynamic>{
@@ -256,15 +368,16 @@ class DashboardListState extends State<DashboardList> {
                           );
 
                           print(result.data);
+                          if (!mounted) return;
+
                           setState(() {
                             _response = result.data['repeat_message'];
                             _responseCount = result.data['repeat_count'];
                           });
+
                           CustomProgressLoader.cancelLoader(context);
 
                         }
-
-
                       } on CloudFunctionsException catch (e) {
                         print('caught firebase functions exception');
                         print(e.code);
@@ -276,14 +389,12 @@ class DashboardListState extends State<DashboardList> {
                         print('caught generic exception');
                         print(e);
                         CustomProgressLoader.cancelLoader(Constants.applicationContext);
-
                       }
-
                      /* CloudFunctions.instance.call(
-                          functionName: "addUser",
-                          parameters: {
-                            "name": 'Testts',
-                            "email": "sdhshfhsdf"
+                        functionName: "addUser",
+                        parameters: {
+                        "name": 'Testts',
+                        "email": "sdhshfhsdf"
                           }
                       );*/
                     },
@@ -296,7 +407,6 @@ class DashboardListState extends State<DashboardList> {
                   ),
                 ],
               )
-
           ),
         ),
       ),

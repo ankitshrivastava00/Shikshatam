@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:data_application/common/Constants.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/model/class_model.dart';
+import 'package:data_application/model/details_model.dart';
 import 'package:data_application/model/institute.dart';
 import 'package:data_application/model/notification_model.dart';
 import 'package:data_application/model/user_data.dart';
@@ -20,33 +21,79 @@ class StudentDetails extends StatefulWidget {
 class StudentDetailsState extends State<StudentDetails> {
   String reply = "", status = "",name,email;
   String items = "true";
-  List<UserData> lis = List();
+  List<DetailsModel> listForDetail = List();
   var isLoading = false;
   ClassModel _selectClass;
   List<DropdownMenuItem<ClassModel>> _dropDownMenuItemsClass;
   List classlist =  ClassModel.getCompanies();
-  final GlobalKey<AnimatedListState> _listKey = GlobalKey();
+  final Firestore auth =Firestore.instance;
+
+  List<Institute> list = List();
+  List<DropdownMenuItem<Institute>> _dropDownMenuItems;
+  Institute _selectedFruit;
+
+  void getInstitute() {
+    try{
+      setState(() {
+        isLoading = true;
+      });
+
+      list.add( Institute(id: '1',name: 'select Institute',city: '',state:'',country:'',pincode:'' ,address:'' ));
+      Firestore.instance
+          .collection(Constants.INSTITUTE_TABLE)
+          .getDocuments()
+          .then((QuerySnapshot snapshot) {
+        snapshot.documents.forEach((f) =>
+            list.add( Institute(id: f.data['id'],name: f.data['name'],city: f.data['city'],state:f.data['state'],country:f.data['country'],pincode:f.data['pincode'] ,address:f.data['address'] )));
+        _dropDownMenuItems = buildAndGetDropDownMenuItems(list);
+        _selectedFruit = _dropDownMenuItems[0].value;
+
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+
+        });
+      });
+
+    }catch(e){
+      print(e.toString());
+    }
+  }
+
+  void changedDropDownItem(Institute selectedFruit) {
+    if (!mounted) return;
+
+    setState(() {
+      _selectedFruit = selectedFruit;
+    });
+    getDataDetails();
+
+  }
+
+  List<DropdownMenuItem<Institute>> buildAndGetDropDownMenuItems(List institute) {
+    List<DropdownMenuItem<Institute>> items = new List();
+    for (Institute i in institute) {
+      items.add(
+        DropdownMenuItem(
+          value: i,
+          child: Text(i.name),
+        ),
+      );
+    }
+
+    return items;
+  }
 
   @override
-  Future initState() {
+  void initState()  {
     super.initState();
-    getData();
-    showdata();
-
-
+    //foo();
     _dropDownMenuItemsClass = buildAndGetDropDownMenuItemsClass(classlist);
     _selectClass = _dropDownMenuItemsClass[0].value;
+    getInstitute();
+    getDataDetails();
 
   }
-
-  Future showdata() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      name = prefs.getString(UserPreferences.USER_NAME).toString();
-      email = prefs.getString(UserPreferences.USER_EMAIL).toString();
-    });
-  }
-
 
   List<DropdownMenuItem<ClassModel>> buildAndGetDropDownMenuItemsClass(List institute) {
     List<DropdownMenuItem<ClassModel>> items = new List();
@@ -62,26 +109,26 @@ class StudentDetailsState extends State<StudentDetails> {
     return items;
   }
 
+  void getDataDetails() {
 
-  void getData() {
     try{
+      if (!mounted) return;
       setState(() {
-        lis.clear();
+          listForDetail.clear();
 
-        isLoading = true;
+          isLoading = true;
+        });
 
-      });
-     // lis.clear();
-
-      Firestore.instance
+      auth
           .collection(Constants.USER_TABLE)
           .where("type", isEqualTo: Constants.STUDENT_PORTAL )
           .snapshots()
           .listen((data) {
+            listForDetail.clear();
         data.documents.forEach((f) {
-          if (f.data['classno']==_selectClass.Name||'select Class'==_selectClass.Name){
+          if ((f.data['classno']==_selectClass.Name||'select Class'==_selectClass.Name) && (f.data['institute']==_selectedFruit.name||'select Institute'==_selectedFruit.name)){
           if(f.data['feesStatus']=='1'){
-            lis.add(UserData(id: f.data['id'],
+            listForDetail.add(DetailsModel(id: f.data['id'],
                 fname: f.data['fname'],
                 lname: f.data['lname'],
                 email: f.data['email'],
@@ -100,7 +147,7 @@ class StudentDetailsState extends State<StudentDetails> {
                 feesStatus: f.data['feesStatus'],
                 status: f.data['status']));
           }else{
-            lis.add(UserData(id: f.data['id'],
+            listForDetail.add(DetailsModel(id: f.data['id'],
                 fname: f.data['fname'],
                 lname: f.data['lname'],
                 email: f.data['email'],
@@ -122,7 +169,11 @@ class StudentDetailsState extends State<StudentDetails> {
           }
         }
         );
-        foo();
+        //foo();
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+        });
       });
 
     }catch(e){
@@ -130,31 +181,59 @@ class StudentDetailsState extends State<StudentDetails> {
     }
   }
 
+  Future updateDataDetails(int index,String value) {
+
+    try{
+      auth.collection(Constants.USER_TABLE)
+          .document(listForDetail[index].documentId)
+          .updateData({'feesStatus': '${value}'});
+      getDataDetails();
+
+    } catch (e) {
+      print(e.toString());
+    }
+  }
+
 
   void changedDropDownItemClass(ClassModel selectedFruit) {
     setState(() {
-      _selectClass = selectedFruit;
-    });
-    getData();
+        _selectClass = selectedFruit;
+      });
+
+    getDataDetails();
 
   }
+/*
   void foo() {
-    if (this.mounted)  setState(() {
-      isLoading = false;
-
-    });
+    if (!mounted) return;
+    setState(() {
+        isLoading = false;
+      });
   }
+*/
 
   @override
   void dispose() {
+    //foo();
+    listForDetail;
     super.dispose();
-    foo();
   }
   @override
   Widget build(BuildContext context) {
     Constants.applicationContext =context;
 
     return new Scaffold(
+      appBar: AppBar(
+        //  leading: new IconButton(icon: const Icon(Icons.arrow_back_ios), onPressed: () {
+        /*  Navigator.pushReplacement(context, new MaterialPageRoute(
+            builder: (BuildContext context) => new StartScreen(),
+          ));*/
+        //   }),
+        // automaticallyImplyLeading: false,
+
+        title: Text("Details"),
+        backgroundColor: Colors.green,
+      ),
       body:
       new Container(
         child:
@@ -165,6 +244,7 @@ class StudentDetailsState extends State<StudentDetails> {
               child:
               Column(
                 children: <Widget>[
+
                   new Container(
                     padding:EdgeInsets.all(5.0),
                     child: new SizedBox(
@@ -186,6 +266,23 @@ class StudentDetailsState extends State<StudentDetails> {
                       ),
                     ),
                   ),
+                  SizedBox(height: 20.0,),
+                  new Container(
+                    //padding:EdgeInsets.all(12.0),
+                    child: new SizedBox(
+                        width: double.infinity,
+                        //  child: new Center(
+                        child:  new DropdownButton(
+                          value: _selectedFruit,
+                          items: _dropDownMenuItems,
+                          onChanged: changedDropDownItem,
+                        )
+                      // ),
+                    ),
+                    // margin: EdgeInsets.only(left: 15.0),
+                  ),
+                  new Container(
+                    child:
                   isLoading ? Center(
                       child: new Container(
                         child:
@@ -214,7 +311,7 @@ class StudentDetailsState extends State<StudentDetails> {
                                       margin: EdgeInsets.all(5.0),
                                       alignment: Alignment.topLeft,
                                       child: new Text(
-                                        'Name : ${lis[index].fname} ${lis[index].lname}',
+                                        'Name : ${listForDetail[index].fname} ${listForDetail[index].lname}',
                                         style: TextStyle(
                                             fontSize: 15.0,
                                             color: Colors.black,
@@ -240,7 +337,7 @@ class StudentDetailsState extends State<StudentDetails> {
                                         new Container(
                                           margin: EdgeInsets.all(5.0),
                                           alignment: Alignment.topLeft,
-                                          child: new Text('${lis[index].classno} ',
+                                          child: new Text('${listForDetail[index].classno} ',
                                             style: TextStyle(
                                                 fontSize: 15.0,
                                                 color: Colors.grey,
@@ -268,39 +365,21 @@ class StudentDetailsState extends State<StudentDetails> {
                                                       fontWeight: FontWeight.bold),
                                                 ),
                                               ),
-                                              new GestureDetector(
+                                              new InkWell(
                                                 onTap: ()  {
-                                                  if(lis[index].feesStatus=="1"){
-                                                    try{
-                                                      Firestore.instance..collection(Constants.USER_TABLE)
-                                                          .document(lis[index].documentId)
-                                                          .updateData({'feesStatus': '0'});
-
-                                                    } catch (e) {
-                                                      print(e.toString());
-                                                    }
-                                                    Navigator.pushReplacement(context,
-                                                        new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage(1)));
-                                                  }else{
-                                                    try{
-                                                      Firestore.instance..collection(Constants.USER_TABLE)
-                                                          .document(lis[index].documentId)
-                                                          .updateData({'feesStatus': '1'});
-
-                                                    } catch (e) {
-                                                      print(e.toString());
-                                                    }
-                                                    Navigator.pushReplacement(context,
-                                                        new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage(1)));
-                                                  }
+                                                  if(listForDetail[index].feesStatus=="1"){
+                                                    updateDataDetails(index,'0');
+                                                    }else{
+                                                    updateDataDetails(index,'1');
+                                                }
                                                 },
                                                 child: new Container(
                                                   margin: EdgeInsets.all(
                                                       7.0),
                                                   alignment: Alignment.topRight,
-                                                  child: Text('${lis[index].feeTest}',
+                                                  child: Text('${listForDetail[index].feeTest}',
                                                     style: TextStyle(
-                                                      backgroundColor: lis[index].feeColor,
+                                                      backgroundColor: listForDetail[index].feeColor,
                                                         fontSize: 15.0,
                                                         color: Colors.white,
                                                         fontWeight: FontWeight.bold),
@@ -320,7 +399,8 @@ class StudentDetailsState extends State<StudentDetails> {
                      //   ),
                       );
                     },
-                    itemCount: lis.length,
+                    itemCount: listForDetail.length,
+                  ),
                   ),
                 ],
               )

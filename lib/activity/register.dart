@@ -46,18 +46,18 @@ class _RegistrationState extends State<Registration> {
 
   SharedPreferences prefs;
 
-  String _first_name,
-      _last_name,
-      _mobile,
-      _email,
-      _password,
-      country,
-      _confirnm_password,
-      _city,
-      address1,
-      address2,
-      fcm_token,
-      pincode;
+  String _first_name="",
+      _last_name="",
+      _mobile="",
+      _email="",
+      _password="",
+      country="",
+      _confirnm_password="",
+      _city="",
+      address1="",
+      address2="",
+      fcm_token="",
+      pincode="";
   var map, ownerMap;
   bool _isLoading = false;
 
@@ -420,6 +420,7 @@ print(e.toString());
                   child:Container(
                   child: new TextFormField(
                     decoration: InputDecoration(labelText: Constants.FIRST_NAME_HINT),
+                    initialValue: _first_name,
                     validator: (valueName) =>
                         valueName.length <= 0 ? Constants.FIRST_NAME_VALIDATION : null,
                     //   !val.contains('@') ? 'Not a valid email.' : null,
@@ -477,6 +478,7 @@ print(e.toString());
 
               TextFormField(
                 decoration: InputDecoration(labelText: Constants.MOBILE_HINT),
+               // initialValue: "97131822",
                 validator: (valueMobile) =>
                     valueMobile.length < 8 ? Constants.MOBILE_VALIDATION : null,
                 //   !val.contains('@') ? 'Not a valid email.' : null,
@@ -502,39 +504,6 @@ print(e.toString());
                 onSaved: (valueAddress2) => address2 = valueAddress2,
                 keyboardType: TextInputType.text,
               ),
-
-/*
-
-  TextFormField(
-                decoration: InputDecoration(labelText: Constants.CITY_HINT),
-                validator: (valuecity) =>
-                valuecity.length <= 0 ? Constants.CITY_VALIDATION : null,
-                //   !val.contains('@') ? 'Not a valid email.' : null,
-                onSaved: (valuecity) => _city = valuecity,
-                keyboardType: TextInputType.text,
-              ),
-
-
-  TextFormField(
-                decoration: InputDecoration(labelText: Constants.STATE_HINT),
-                validator: (valueState) =>
-                valueState.length <= 0 ? Constants.STATE_VALIDATION : null,
-                //   !val.contains('@') ? 'Not a valid email.' : null,
-                onSaved: (valueState) => _state = valueState,
-                keyboardType: TextInputType.text,
-              ),
-
-
-  TextFormField(
-                decoration: InputDecoration(labelText: Constants.COUNTRY_HINT),
-                validator: (valueCountry) =>
-                valueCountry.length <= 0 ? Constants.COUNTRY_VALIDATION : null,
-                //   !val.contains('@') ? 'Not a valid email.' : null,
-                onSaved: (valueCountry) => country = valueCountry,
-                keyboardType: TextInputType.text,
-              ),
-
-*/
 
              new Row(
                mainAxisAlignment: MainAxisAlignment.spaceEvenly,

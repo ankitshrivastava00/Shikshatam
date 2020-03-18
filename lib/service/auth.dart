@@ -47,6 +47,7 @@ class AuthService{
 
 
   }
+
 // REGISTER WITH EMAIL AND PASSWORD
   Future registerWithEmailAndPassword(String fname,String lname,String email,String password,String mobile,String address1,String address2,String city
       ,String state,String country,String pincode,String institute,String classno,String fcm_token) async{

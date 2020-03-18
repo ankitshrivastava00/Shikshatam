@@ -119,7 +119,7 @@ class _LoginState extends State<Login> {
               prefs.setString(UserPreferences.LOGIN_STATUS, '${Constants.TEACHER_PORTAL}');
 
               Navigator.pushReplacement(context,
-                  new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage(0)));
+                  new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage()));
             }
 
         /*  Navigator.pushReplacement(context,

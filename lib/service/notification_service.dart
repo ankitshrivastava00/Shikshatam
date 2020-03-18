@@ -46,7 +46,7 @@ class _NotificationServiceState extends State<NotificationService> {
     }else if(status == '${Constants.TEACHER_PORTAL}'){
 
       Navigator.pushReplacement(context,
-          new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage(0)));
+          new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage()));
     }else{
 
       Navigator.pushReplacement(context,

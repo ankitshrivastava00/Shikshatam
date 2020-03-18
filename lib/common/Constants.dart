@@ -1,4 +1,4 @@
- import 'package:flutter/cupertino.dart';
+ import 'package:flutter/material.dart';
 
 class Constants {
   static final String BASE_URL = "https://floating-brushlands-52313.herokuapp.com";
@@ -13,7 +13,6 @@ class Constants {
   static final String STUDENT_PORTAL = "user";
   static final String TEACHER_PORTAL = "teacher";
   static final String ADMIN_PORTAL = "admin";
-
 
   // Component Data
   static final String EMAIL_HINT = "Email *";

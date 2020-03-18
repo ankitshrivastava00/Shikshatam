@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:data_application/common/Constants.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/model/class_model.dart';
+import 'package:data_application/model/institute.dart';
 import 'package:data_application/model/user_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -21,22 +22,73 @@ class StudentFeedbackState extends State<StudentFeedback> {
   List<DropdownMenuItem<ClassModel>> _dropDownMenuItemsClass;
   List classlist = ClassModel.getCompanies();
 
-  @override
-  Future initState() {
-    super.initState();
-    getData();
-    showdata();
-    _dropDownMenuItemsClass = buildAndGetDropDownMenuItemsClass(classlist);
-    _selectClass = _dropDownMenuItemsClass[0].value;
+  List<Institute> list = List();
+  List<DropdownMenuItem<Institute>> _dropDownMenuItems;
+  Institute _selectedFruit;
+
+  void getInstitute() {
+    try{
+      setState(() {
+        isLoading = true;
+      });
+
+      list.add( Institute(id: '1',name: 'select Institute',city: '',state:'',country:'',pincode:'' ,address:'' ));
+      Firestore.instance
+          .collection(Constants.INSTITUTE_TABLE)
+          .getDocuments()
+          .then((QuerySnapshot snapshot) {
+        snapshot.documents.forEach((f) =>
+            list.add( Institute(id: f.data['id'],name: f.data['name'],city: f.data['city'],state:f.data['state'],country:f.data['country'],pincode:f.data['pincode'] ,address:f.data['address'] )));
+        _dropDownMenuItems = buildAndGetDropDownMenuItems(list);
+        _selectedFruit = _dropDownMenuItems[0].value;
+
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+
+        });
+      });
+
+    }catch(e){
+      print(e.toString());
+    }
   }
 
-  Future showdata() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
+  void changedDropDownItem(Institute selectedFruit) {
+    if (!mounted) return;
+
     setState(() {
-      name = prefs.getString(UserPreferences.USER_NAME).toString();
-      email = prefs.getString(UserPreferences.USER_EMAIL).toString();
+      _selectedFruit = selectedFruit;
     });
+    getDataFeedback();
+
   }
+
+  List<DropdownMenuItem<Institute>> buildAndGetDropDownMenuItems(List institute) {
+    List<DropdownMenuItem<Institute>> items = new List();
+    for (Institute i in institute) {
+      items.add(
+        DropdownMenuItem(
+          value: i,
+          child: Text(i.name),
+        ),
+      );
+    }
+
+    return items;
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    getInstitute();
+    _dropDownMenuItemsClass = buildAndGetDropDownMenuItemsClass(classlist);
+    _selectClass = _dropDownMenuItemsClass[0].value;
+    getDataFeedback();
+
+  }
+
+
 
   List<DropdownMenuItem<ClassModel>> buildAndGetDropDownMenuItemsClass(List institute) {
     List<DropdownMenuItem<ClassModel>> items = new List();
@@ -51,13 +103,13 @@ class StudentFeedbackState extends State<StudentFeedback> {
     return items;
   }
 
-  void getData() {
+  void getDataFeedback() {
     try{
-      setState(() {
-        isLoading = true;
-        lis.clear();
-
-      });
+      if (!mounted) return;
+        setState(() {
+          isLoading = true;
+          lis.clear();
+        });
 
       Firestore.instance
           .collection(Constants.USER_TABLE)
@@ -65,7 +117,7 @@ class StudentFeedbackState extends State<StudentFeedback> {
           .snapshots()
           .listen((data) {
         data.documents.forEach((f) {
-          if (f.data['classno']==_selectClass.Name||'select Class'==_selectClass.Name){
+          if ((f.data['classno']==_selectClass.Name||'select Class'==_selectClass.Name) && (f.data['institute']==_selectedFruit.name||'select Institute'==_selectedFruit.name)){
             if(f.data['feesStatus']=='1'){
               lis.add(UserData(id: f.data['id'],
                   fname: f.data['fname'],
@@ -108,12 +160,13 @@ class StudentFeedbackState extends State<StudentFeedback> {
           }
 
         }  );
+        if (!mounted) return;
+          setState(() {
+            isLoading = false;
+          });
 
-        setState(() {
-          isLoading = false;
-
-        });
       });
+
 
     }catch(e){
       print(e.toString());
@@ -122,18 +175,36 @@ class StudentFeedbackState extends State<StudentFeedback> {
 
 
   void changedDropDownItemClass(ClassModel selectedFruit) {
-    setState(() {
+    if (!mounted) return;
+
+      setState(() {
       _selectClass = selectedFruit;
-      getData();
+      getDataFeedback();
     });
   }
 
-
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
+    lis;
+  }
   @override
   Widget build(BuildContext context) {
     Constants.applicationContext =context;
 
     return new Scaffold(
+      appBar: AppBar(
+        //  leading: new IconButton(icon: const Icon(Icons.arrow_back_ios), onPressed: () {
+        /*  Navigator.pushReplacement(context, new MaterialPageRoute(
+            builder: (BuildContext context) => new StartScreen(),
+          ));*/
+        //   }),
+       // automaticallyImplyLeading: false,
+
+        title: Text("Feedback"),
+        backgroundColor: Colors.green,
+      ),
       body:
       new Container(
         child:isLoading ? Center(
@@ -172,7 +243,21 @@ class StudentFeedbackState extends State<StudentFeedback> {
                       ),
                     ),
                   ),
-
+                  SizedBox(height: 20.0,),
+                  new Container(
+                    //padding:EdgeInsets.all(12.0),
+                    child: new SizedBox(
+                        width: double.infinity,
+                        //  child: new Center(
+                        child:  new DropdownButton(
+                          value: _selectedFruit,
+                          items: _dropDownMenuItems,
+                          onChanged: changedDropDownItem,
+                        )
+                      // ),
+                    ),
+                    // margin: EdgeInsets.only(left: 15.0),
+                  ),
                   ListView.builder(
                     physics: PageScrollPhysics(),
                     shrinkWrap: true,
