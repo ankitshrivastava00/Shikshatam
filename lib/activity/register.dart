@@ -399,11 +399,7 @@ print(e.toString());
         title: Text(Constants.REGISTRATION_PAGE),
         backgroundColor: Colors.green,
       ),
-      body: isLoading
-          ? Center(
-        child: CircularProgressIndicator(),
-      )
-          :  Padding(
+      body:  Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: formKey,
@@ -420,12 +416,13 @@ print(e.toString());
                   child:Container(
                   child: new TextFormField(
                     decoration: InputDecoration(labelText: Constants.FIRST_NAME_HINT),
-                    initialValue: _first_name,
                     validator: (valueName) =>
                         valueName.length <= 0 ? Constants.FIRST_NAME_VALIDATION : null,
                     //   !val.contains('@') ? 'Not a valid email.' : null,
                     onSaved: (valueName) => _first_name = valueName,
                     keyboardType: TextInputType.text,
+                    initialValue: _first_name,
+
 
                   ),
                     margin: EdgeInsets.only(right:8.0),
@@ -505,7 +502,12 @@ print(e.toString());
                 keyboardType: TextInputType.text,
               ),
 
-             new Row(
+              isLoading
+                  ? Center(
+                child: CircularProgressIndicator(),
+              )
+                  : new Container(
+                child:   new Row(
                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
 
                children: <Widget>[
@@ -542,9 +544,14 @@ print(e.toString());
                  ),
                ],
              ),
+              ), isLoading
+                  ? Center(
+                child: CircularProgressIndicator(),
+              )
+                  : new Container(
+                child:
 
-
-              new Row(
+                new Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
 
                 children: <Widget>[
@@ -582,7 +589,7 @@ print(e.toString());
                   ),
                 ],
               ),
-
+              ),
               new Container(
                 //padding:EdgeInsets.all(12.0),
                 child: new SizedBox(
