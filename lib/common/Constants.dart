@@ -27,6 +27,8 @@ class Constants {
   static final String STATE_HINT = "State *";
   static final String COUNTRY_HINT = "Country *";
   static final String PINCODE_HINT = "Pincode *";
+  static final String INSTITUTE_HINT = "Institute *";
+  static final String CLASS_HINT = "Class *";
   static final String REGISTER_BUTTON_HINT = "REGISTER";
   static final String LOGIN_BUTTON = "LOGIN";
   static final String REGISTRATION_PAGE = "Registration";
@@ -54,6 +56,7 @@ class Constants {
   // TOAST MESSAGES
   static final String USER_ALREADY = "Please use Diffrent email ID ,User already registered";
   static final String USER_REGISTER = "User registered";
+  static final String NOTIFICATION_SEND = "Send Succesfully";
   static final String INCORRECT_PASSWORD = "Incorrect Email And Password";
 
   // DATABASE KEY
@@ -62,5 +65,7 @@ class Constants {
   static final String NOTIFICATION_TABLE = "notification";
   static final String LOCATION_TABLE = "location";
   static final String CITY_TABLE = "/city";
+  static final String FEES_TABLE = "/fees";
+  static final String FEEDBACK_TABLE = "/feedback";
 
  }

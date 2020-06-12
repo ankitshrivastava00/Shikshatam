@@ -72,6 +72,7 @@ class AuthService{
             institute,
           classno,
             fcm_token,);
+
       }
       return _userFromFirebaseUser(user);
     }catch (e){

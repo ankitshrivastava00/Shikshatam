@@ -1,5 +1,6 @@
 import 'package:data_application/activity/home.dart';
 import 'package:data_application/activity/profile_edit.dart';
+import 'package:data_application/activity/view_feedback.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/model/class_model.dart';
 import 'package:data_application/teacher_screens/dashboard.dart';
@@ -14,36 +15,36 @@ class DrawerItem {
   IconData icon;
   DrawerItem(this.title, this.icon);
 }
-class NavDrawer extends StatefulWidget {
+class StudentNavDrawer extends StatefulWidget {
 
   int po;
-  NavDrawer(this.po);
+  StudentNavDrawer(this.po);
   final drawerItems = [
     new DrawerItem("Home", Icons.home),
-    new DrawerItem("Details", Icons.assignment),
+  //  new DrawerItem("Details", Icons.assignment),
     new DrawerItem("Feedback", Icons.settings),
     new DrawerItem("Logout", Icons.exit_to_app)
   ];
 
   @override
   State<StatefulWidget> createState() {
-    return new _NavDrawerState();
+    return new _StudentNavDrawerState();
   }
 }
 
-class _NavDrawerState extends State<NavDrawer> {
+class _StudentNavDrawerState extends State<StudentNavDrawer> {
   int _selectedDrawerIndex = 0;
 
-  String userId,name,email,classNo,institute;
+  String userId,name,email,_mobile;
   _getDrawerItemWidget(int pos) {
     switch (pos) {
       case 0:
-        return new DashboardList();
+        return new Home();
+  /*    case 1:
+        return new StudentDetails();*/
       case 1:
-        return new StudentDetails();
+        return new ViewFeedback();
       case 2:
-        return new StudentFeedback();
-      case 3:
         return new Logout();
       default:
         return new Text("Error");
@@ -73,7 +74,6 @@ class _NavDrawerState extends State<NavDrawer> {
         name = prefs.getString(UserPreferences.USER_NAME).toString();
         email = prefs.getString(UserPreferences.USER_EMAIL).toString();
         userId = prefs.getString(UserPreferences.USER_ID).toString();
-
       });
     }
   }
@@ -126,7 +126,7 @@ class _NavDrawerState extends State<NavDrawer> {
                         GestureDetector(
                           onTap: () {
                             Navigator.push(context,
-                                new MaterialPageRoute(builder: (BuildContext context) =>  ProfileEdit(id:userId)));
+                                new MaterialPageRoute(builder: (BuildContext context) =>  ProfileEdit(id: userId,)));
                           },
                           child:new Container(
                             width: 60.0,
@@ -149,8 +149,7 @@ class _NavDrawerState extends State<NavDrawer> {
                       ] ),
                 ),
                 accountName: new Text('${name}'),
-                accountEmail :new Text('${email}'),
-
+                accountEmail :new Text('${email}')
             ),
             new Column(children: drawerOptions)
           ],

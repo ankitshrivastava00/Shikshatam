@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intl/intl.dart';
 
 class DashboardList extends StatefulWidget {
   @override
@@ -18,13 +19,20 @@ class DashboardList extends StatefulWidget {
 }
 
 class DashboardListState extends State<DashboardList> {
-  String reply = "", status = "",name,token,email;
+  FocusNode myFocusNode = FocusNode();
+
+
+  final formate ={
+    TextInputType.datetime : DateFormat
+  };
+  DateTime currentDateTime =DateTime.now();
+  String reply = "", status = "",name="",token="",email="",USER_INSTITUTE="";
   String items = "true";
   List<NotificationModel> lis = List();
   var isLoading = false;
   ClassModel _selectClass;
   List<DropdownMenuItem<ClassModel>> _dropDownMenuItemsClass;
-  TextEditingController emailController = new TextEditingController();
+  TextEditingController emailController = new TextEditingController(text: '');
   HttpsCallable sendNotification,callable;
   List<Institute> list = List();
   List<DropdownMenuItem<Institute>> _dropDownMenuItems;
@@ -33,12 +41,14 @@ class DashboardListState extends State<DashboardList> {
   List classlist =  ClassModel.getCompanies();
   String _response = 'no response';
   int _responseCount = 0;
+  int _current = 0;
 
   @override
   Future initState() {
     super.initState();
     getData();
     showdata();
+
     getInstitute();
     callable = CloudFunctions.instance
         .getHttpsCallable(functionName: 'addUser')
@@ -94,6 +104,7 @@ class DashboardListState extends State<DashboardList> {
     setState(() {
       name = prefs.getString(UserPreferences.USER_NAME).toString();
       email = prefs.getString(UserPreferences.USER_EMAIL).toString();
+      USER_INSTITUTE = prefs.getString(UserPreferences.USER_INSTITUTE).toString();
       token = prefs.getString(UserPreferences.USER_FCM).toString();
     });
   }
@@ -107,17 +118,34 @@ class DashboardListState extends State<DashboardList> {
       });
 
       Firestore.instance
-          .collection('notification')
+          .collection('${Constants.NOTIFICATION_TABLE}')
+          .where("type", isEqualTo: Constants.TEACHER_PORTAL )
+          //.orderBy('datetime', descending: false)
+        //  .orderBy("datetime",descending: true)
+          .limit(5)
           .getDocuments()
           .then((QuerySnapshot snapshot) {
-        snapshot.documents.forEach((f) =>
-            lis.add(NotificationModel(title: f.data['title'].toString(),description: f.data['description'].toString() )));
-        if (!mounted) return;
+            if(snapshot.documents.length==0){
+              lis.add(
+                  NotificationModel(title: '${Constants.APPLICATION_NAME}',
+                      description: 'Welcome ${name}'));
+              setState(() {
+                isLoading = false;
+              });
+            }else {
+              snapshot.documents.forEach((f) {
 
-        setState(() {
-          isLoading = false;
+                  lis.add(NotificationModel(title: f.data['title'].toString(),
+                      description: f.data['description'].toString()));
 
-        });
+                if (!mounted) return;
+
+                setState(() {
+                  isLoading = false;
+                });
+              }
+              );
+            }
       });
 
     }catch(e){
@@ -179,22 +207,27 @@ class DashboardListState extends State<DashboardList> {
       Firestore.instance
           .collection(Constants.USER_TABLE)
           .where("classno", isEqualTo: '${ClassNo}' )
+          .where("institute", isEqualTo: '${USER_INSTITUTE}' )
+          .where("type", isEqualTo: 'user' )
+          .where("status", isEqualTo: '1' )
           .snapshots()
           .listen((data) {
         data.documents.forEach((f) async{
-          if(_selectedFruit.name=='${f.data['institute']}' && 'user'=='${f.data['type']}'){
+          if(f.data['fcm_token'].toString().trim()!='${token.toString().trim()}'){
             final HttpsCallableResult result1 = await sendNotification
                 .call(
               <String, dynamic>{
                 'fcm': '${f.data['fcm_token']}',
                 'classno': '${_selectClass.Name}',
-                'title': '${Constants.APPLICATION_NAME}',
-                'description': emailController.text,
+                'title': '${name}',
+                'description': '${emailController.text}',
               },
             );
-            print(result1.data);
+            print('wearwerwerwe ${result1.data}');
         }
+
         }
+      //  }
         );
       });
     }catch(e){
@@ -233,7 +266,13 @@ class DashboardListState extends State<DashboardList> {
                     child: new SizedBox(
                       height: 140.0,
                       width: double.infinity,
-                      child: CarouselSlider(
+                      child:
+                      CarouselSlider(
+                          autoPlay: false,
+                        enlargeCenterPage: true,
+                        aspectRatio: 2.0,
+                        enableInfiniteScroll: false,
+
                           items:lis.map(
                                 (url) {
                               return Container(
@@ -246,7 +285,7 @@ class DashboardListState extends State<DashboardList> {
 
                                         new Text('${url.title}',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 20.0),textAlign: TextAlign.center,),
                                         SizedBox(height: 15.0,),
-                                        new Text('${url.description}',style: TextStyle(color: Colors.white),textAlign: TextAlign.center,),
+                                        new Text('${url.description}',style: TextStyle(color: Colors.white),textAlign: TextAlign.start,),
 
                                       ],
                                     ),
@@ -255,13 +294,12 @@ class DashboardListState extends State<DashboardList> {
                               );
                             },
                           ).toList() ,
-                          autoPlay: true
                       ),
                     ),
                   ),
                   SizedBox(height: 20.0,),
                   new Container(
-                    padding:EdgeInsets.all(10.0),
+                    padding:EdgeInsets.fromLTRB(10.0,0.0,10.0,0.0),
                     child: new SizedBox(
                         width: double.infinity,
                         //  child: new Center(
@@ -275,9 +313,9 @@ class DashboardListState extends State<DashboardList> {
                     // margin: EdgeInsets.only(left: 15.0),
                   ),
 
-                  SizedBox(height: 20.0,),
+               /*   SizedBox(height: 10.0,),
                   new Container(
-                    //padding:EdgeInsets.all(12.0),
+                    padding:EdgeInsets.fromLTRB(10.0,0.0,10.0,0.0),
                     child: new SizedBox(
                         width: double.infinity,
                         //  child: new Center(
@@ -289,7 +327,7 @@ class DashboardListState extends State<DashboardList> {
                       // ),
                     ),
                     // margin: EdgeInsets.only(left: 15.0),
-                  ),
+                  ),*/
                   SizedBox(height: 20.0,),
 
                   SizedBox(
@@ -307,11 +345,18 @@ class DashboardListState extends State<DashboardList> {
                           padding: EdgeInsets.all(40.0),
                           child: new TextField(
                             controller: emailController,
+
+                            obscureText: false,
+
                             decoration: InputDecoration(hintText: Constants.NOTIFICATION_HINT,
                               border: InputBorder.none,),
                             textAlign: TextAlign.center,
                             autocorrect: true,
                             autofocus: false,
+                            enableSuggestions: false,
+                            focusNode: myFocusNode,
+                            maxLength: 100,
+
                           )),
                     ),
                   ),
@@ -335,7 +380,7 @@ class DashboardListState extends State<DashboardList> {
                               backgroundColor: Colors.grey,
                               textColor: Colors.white,
                               fontSize: 16.0);
-                        } else  if(_selectedFruit.name=="select Institute"){
+                        } else /* if(_selectedFruit.name=="select Institute"){
 
                           Fluttertoast.showToast(
                               msg:
@@ -346,7 +391,7 @@ class DashboardListState extends State<DashboardList> {
                               backgroundColor: Colors.grey,
                               textColor: Colors.white,
                               fontSize: 16.0);
-                        }else  if (emailController.text.isEmpty) {
+                        }else */ if (emailController.text.isEmpty) {
                           Fluttertoast.showToast(
                               msg: "Field Empty",
                               toastLength: Toast.LENGTH_SHORT,
@@ -356,24 +401,48 @@ class DashboardListState extends State<DashboardList> {
                               textColor: Colors.white,
                               fontSize: 16.0);
                         } else  {
+
                           CustomProgressLoader.showLoader(Constants.applicationContext);
                           getNotification_token('${_selectClass.Name}','${_selectedFruit.name}');
+                          print('testingtegrrrr');
+
                           final HttpsCallableResult result = await callable
                               .call(
                             <String, dynamic>{
                               'classno': '${_selectClass.Name}',
+                              'institute': '${USER_INSTITUTE}',
                               'title': '${Constants.APPLICATION_NAME}',
                               'description': emailController.text,
-                            },
-                          );
+                              'user': 'All',
+                              'type': '${Constants.STUDENT_PORTAL}',
+                              // 'datetime':new DateTime.now(),
+                            //  'datetime': '${DateTime.now().toUtc().millisecondsSinceEpoch}',
+                             // 'datetime': '${DateTime.now().toUtc().millisecondsSinceEpoch}',
 
+                            },
+
+                          );
+                          Fluttertoast.showToast(
+                              msg:
+                              Constants.NOTIFICATION_SEND,
+                              toastLength: Toast.LENGTH_SHORT,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIos: 1,
+                              backgroundColor: Colors.grey,
+                              textColor: Colors.white,
+                              fontSize: 16.0);
                           print(result.data);
+
                           if (!mounted) return;
 
                           setState(() {
                             _response = result.data['repeat_message'];
                             _responseCount = result.data['repeat_count'];
+                            emailController.text='';
+
                           });
+                          print('testingtegrr');
+
 
                           CustomProgressLoader.cancelLoader(context);
 
@@ -381,13 +450,40 @@ class DashboardListState extends State<DashboardList> {
                       } on CloudFunctionsException catch (e) {
                         print('caught firebase functions exception');
                         print(e.code);
+                        setState(() {
+                          emailController.text='';
+                        });
+                        Fluttertoast.showToast(
+                            msg:
+                            Constants.NOTIFICATION_SEND,
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            timeInSecForIos: 1,
+                            backgroundColor: Colors.grey,
+                            textColor: Colors.white,
+                            fontSize: 16.0);
                         print(e.message);
                         print(e.details);
                         CustomProgressLoader.cancelLoader(Constants.applicationContext);
 
                       } catch (e) {
                         print('caught generic exception');
+                        setState(() {
+                          emailController.text='';
+                        });
+                        Fluttertoast.showToast(
+                            msg:
+                            Constants.NOTIFICATION_SEND,
+                            toastLength: Toast.LENGTH_SHORT,
+                            gravity: ToastGravity.BOTTOM,
+                            timeInSecForIos: 1,
+                            backgroundColor: Colors.grey,
+                            textColor: Colors.white,
+                            fontSize: 16.0);
                         print(e);
+                        setState(() {
+
+                        });
                         CustomProgressLoader.cancelLoader(Constants.applicationContext);
                       }
                      /* CloudFunctions.instance.call(

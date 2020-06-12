@@ -1,11 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:data_application/activity/home.dart';
 import 'package:data_application/activity/register.dart';
+import 'package:data_application/activity/student_nav.dart';
+import 'package:data_application/common/Connectivity.dart';
 import 'package:data_application/common/Constants.dart';
 import 'package:data_application/common/CustomProgressDialog.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/model/user_data.dart';
 import 'package:data_application/service/auth.dart';
+import 'package:data_application/teacher_screens/navdrawer.dart';
 import 'package:data_application/teacher_screens/teacher_home.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -56,6 +59,7 @@ class _LoginState extends State<Login> {
     if (form.validate()) {
       form.save();
       CustomProgressLoader.showLoader(context);
+   //   var isConnect = await ConectionDetecter.isConnected();
 
       dynamic result = await _auth.signInWithEmailAndPassword(_mobile, _password) ;
       if(result== null) {
@@ -95,6 +99,8 @@ class _LoginState extends State<Login> {
               address1: f.data['address1'],
               address2: f.data['address2'],
               type: f.data['type'],
+              classno: f.data['classno'],
+              institute: f.data['institute'],
               status: f.data['status']))
           );
           try{
@@ -108,18 +114,20 @@ class _LoginState extends State<Login> {
           prefs.setString(UserPreferences.USER_EMAIL, list[0].email);
           prefs.setString(UserPreferences.USER_NAME, '${list[0].fname} ${list[0].lname}');
           prefs.setString(UserPreferences.USER_MOBILE, list[0].mobile);
+          prefs.setString(UserPreferences.USER_INSTITUTE, list[0].institute);
+          prefs.setString(UserPreferences.USER_CLASS, list[0].classno);
 
           if(list[0].type==Constants.STUDENT_PORTAL){
             prefs.setString(UserPreferences.LOGIN_STATUS, '${Constants.STUDENT_PORTAL}');
 
             Navigator.pushReplacement(context,
-                new MaterialPageRoute(builder: (BuildContext context) => Home()));
+                new MaterialPageRoute(builder: (BuildContext context) => StudentNavDrawer(0)));
           }else
             if(list[0].type==Constants.TEACHER_PORTAL){
               prefs.setString(UserPreferences.LOGIN_STATUS, '${Constants.TEACHER_PORTAL}');
 
               Navigator.pushReplacement(context,
-                  new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage()));
+                  new MaterialPageRoute(builder: (BuildContext context) => NavDrawer(0)));
             }
 
         /*  Navigator.pushReplacement(context,

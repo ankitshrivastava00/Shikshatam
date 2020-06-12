@@ -1,7 +1,9 @@
 import 'package:data_application/activity/home.dart';
 import 'package:data_application/activity/login.dart';
+import 'package:data_application/activity/student_nav.dart';
 import 'package:data_application/common/Constants.dart';
 import 'package:data_application/model/user.dart';
+import 'package:data_application/teacher_screens/navdrawer.dart';
 import 'package:data_application/teacher_screens/teacher_home.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -42,11 +44,11 @@ class _NotificationServiceState extends State<NotificationService> {
     }else if(status == '${Constants.STUDENT_PORTAL}'){
 
       Navigator.pushReplacement(context,
-          new MaterialPageRoute(builder: (BuildContext context) => Home()));
+          new MaterialPageRoute(builder: (BuildContext context) => StudentNavDrawer(0)));
     }else if(status == '${Constants.TEACHER_PORTAL}'){
 
       Navigator.pushReplacement(context,
-          new MaterialPageRoute(builder: (BuildContext context) => TeacherHomePage()));
+          new MaterialPageRoute(builder: (BuildContext context) => NavDrawer(0)));
     }else{
 
       Navigator.pushReplacement(context,

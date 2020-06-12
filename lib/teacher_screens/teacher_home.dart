@@ -14,7 +14,7 @@ class TeacherHomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      drawer: NavDrawer(),
+      drawer: NavDrawer(0),
       appBar: AppBar(
         backgroundColor: Colors.green,
 

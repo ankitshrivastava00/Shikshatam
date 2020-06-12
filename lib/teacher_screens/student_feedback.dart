@@ -2,8 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:data_application/common/Constants.dart';
 import 'package:data_application/common/UserPreferences.dart';
 import 'package:data_application/model/class_model.dart';
+import 'package:data_application/model/details_model.dart';
 import 'package:data_application/model/institute.dart';
 import 'package:data_application/model/user_data.dart';
+import 'package:data_application/teacher_screens/feedback_status.dart';
+import 'package:data_application/teacher_screens/fees_status.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,21 +17,28 @@ class StudentFeedback extends StatefulWidget {
 }
 
 class StudentFeedbackState extends State<StudentFeedback> {
-  String reply = "", status = "",name="",email="";
+  String reply = "", status = "",name="",institute="",classNo="",email="";
   String items = "true";
-  List<UserData> lis = List();
+  List<DetailsModel> listForDetail = List();
   var isLoading = false;
   ClassModel _selectClass;
   List<DropdownMenuItem<ClassModel>> _dropDownMenuItemsClass;
-  List classlist = ClassModel.getCompanies();
+  List classlist =  ClassModel.getCompanies();
+  final Firestore auth =Firestore.instance;
+  SharedPreferences prefs;
 
   List<Institute> list = List();
   List<DropdownMenuItem<Institute>> _dropDownMenuItems;
   Institute _selectedFruit;
 
-  void getInstitute() {
+  void getInstitute() async {
     try{
+      prefs = await SharedPreferences.getInstance();
+
       setState(() {
+        classNo = prefs.getString(UserPreferences.USER_CLASS);
+        name = prefs.getString(UserPreferences.USER_NAME);
+        institute= prefs.getString(UserPreferences.USER_INSTITUTE);
         isLoading = true;
       });
 
@@ -60,7 +70,7 @@ class StudentFeedbackState extends State<StudentFeedback> {
     setState(() {
       _selectedFruit = selectedFruit;
     });
-    getDataFeedback();
+    getDataDetails();
 
   }
 
@@ -79,16 +89,16 @@ class StudentFeedbackState extends State<StudentFeedback> {
   }
 
   @override
-  void initState() {
+  void initState()  {
     super.initState();
-    getInstitute();
+
+    //foo();
     _dropDownMenuItemsClass = buildAndGetDropDownMenuItemsClass(classlist);
     _selectClass = _dropDownMenuItemsClass[0].value;
-    getDataFeedback();
+    getInstitute();
+    getDataDetails();
 
   }
-
-
 
   List<DropdownMenuItem<ClassModel>> buildAndGetDropDownMenuItemsClass(List institute) {
     List<DropdownMenuItem<ClassModel>> items = new List();
@@ -100,73 +110,61 @@ class StudentFeedbackState extends State<StudentFeedback> {
         ),
       );
     }
+
     return items;
   }
 
-  void getDataFeedback() {
+  void getDataDetails() {
+
     try{
       if (!mounted) return;
-        setState(() {
-          isLoading = true;
-          lis.clear();
-        });
+      setState(() {
+        listForDetail.clear();
 
-      Firestore.instance
-          .collection(Constants.USER_TABLE)
-          .where("type", isEqualTo: Constants.STUDENT_PORTAL )
-          .snapshots()
-          .listen((data) {
-        data.documents.forEach((f) {
-          if ((f.data['classno']==_selectClass.Name||'select Class'==_selectClass.Name) && (f.data['institute']==_selectedFruit.name||'select Institute'==_selectedFruit.name)){
-            if(f.data['feesStatus']=='1'){
-              lis.add(UserData(id: f.data['id'],
-                  fname: f.data['fname'],
-                  lname: f.data['lname'],
-                  email: f.data['email'],
-                  city: f.data['city'],
-                  state: f.data['state'],
-                  country: f.data['country'],
-                  pincode: f.data['pincode'],
-                  address1: f.data['address1'],
-                  address2: f.data['address2'],
-                  type: f.data['type'],
-                  classno: f.data['classno'],
-                  feedback: f.data['feedback'],
-                  documentId: f.documentID,
-                  feeColor:  Color(0xFF00b300) as Color ,
-                  feeTest: 'Paid',
-                  feesStatus: f.data['feesStatus'],
-                  status: f.data['status']));
-            }else{
-              lis.add(UserData(id: f.data['id'],
-                  fname: f.data['fname'],
-                  lname: f.data['lname'],
-                  email: f.data['email'],
-                  city: f.data['city'],
-                  state: f.data['state'],
-                  country: f.data['country'],
-                  pincode: f.data['pincode'],
-                  address1: f.data['address1'],
-                  address2: f.data['address2'],
-                  type: f.data['type'],
-                  classno: f.data['classno'],
-                  feedback: f.data['feedback'],
-                  documentId: f.documentID,
-                  feeColor:  Color(0xFFFF0000) as Color ,
-                  feeTest: 'Unpaid',
-                  feesStatus: f.data['feesStatus'],
-                  status: f.data['status']));
-            }
-          }
-
-        }  );
-        if (!mounted) return;
-          setState(() {
-            isLoading = false;
-          });
-
+        isLoading = true;
       });
 
+      auth
+          .collection(Constants.USER_TABLE)
+          .where("type", isEqualTo: Constants.STUDENT_PORTAL )
+          .where("institute", isEqualTo: '${institute}' )
+          .where("status", isEqualTo: '1' )
+
+          .snapshots()
+          .listen((data) {
+        listForDetail.clear();
+        data.documents.forEach((f) {
+          if ((f.data['classno']==_selectClass.Name||'select Class'==_selectClass.Name)){
+            listForDetail.add(DetailsModel(id: f.data['id'],
+                fname: f.data['fname'],
+                lname: f.data['lname'],
+                email: f.data['email'],
+                city: f.data['city'],
+                state: f.data['state'],
+                country: f.data['country'],
+                pincode: f.data['pincode'],
+                address1: f.data['address1'],
+                address2: f.data['address2'],
+                type: f.data['type'],
+                mobile: f.data['mobile'],
+                institute: f.data['institute'],
+                classno: f.data['classno'],
+                feedback: f.data['feedback'],
+                documentId: f.documentID,
+                feeColor:  Color(0xFF00b300) as Color ,
+                feeTest: 'Paid',
+                feesStatus: f.data['feesStatus'],
+                status: f.data['status']));
+
+          }
+        }
+        );
+        //foo();
+        if (!mounted) return;
+        setState(() {
+          isLoading = false;
+        });
+      });
 
     }catch(e){
       print(e.toString());
@@ -175,209 +173,148 @@ class StudentFeedbackState extends State<StudentFeedback> {
 
 
   void changedDropDownItemClass(ClassModel selectedFruit) {
-    if (!mounted) return;
-
-      setState(() {
+    setState(() {
       _selectClass = selectedFruit;
-      getDataFeedback();
     });
+
+    getDataDetails();
+
   }
+/*
+  void foo() {
+    if (!mounted) return;
+    setState(() {
+        isLoading = false;
+      });
+  }
+*/
 
   @override
   void dispose() {
-    // TODO: implement dispose
+    //foo();
+    listForDetail;
     super.dispose();
-    lis;
   }
+
   @override
   Widget build(BuildContext context) {
     Constants.applicationContext =context;
 
     return new Scaffold(
-      appBar: AppBar(
+     /* appBar: AppBar(
         //  leading: new IconButton(icon: const Icon(Icons.arrow_back_ios), onPressed: () {
-        /*  Navigator.pushReplacement(context, new MaterialPageRoute(
+        *//*  Navigator.pushReplacement(context, new MaterialPageRoute(
             builder: (BuildContext context) => new StartScreen(),
-          ));*/
+          ));*//*
         //   }),
-       // automaticallyImplyLeading: false,
+        // automaticallyImplyLeading: false,
 
         title: Text("Feedback"),
         backgroundColor: Colors.green,
-      ),
+      ),*/
       body:
-      new Container(
-        child:isLoading ? Center(
-            child: new Container(
-              child:
-              CircularProgressIndicator(valueColor: new AlwaysStoppedAnimation(Colors.green),
-                strokeWidth: 5.0,
-                semanticsLabel: 'is Loading',),
-            )
-        ):
-        new SingleChildScrollView(
+      new SingleChildScrollView(
+        child:
+        new Padding
+          (padding: EdgeInsets.all(5.0),
           child:
-          new Padding
-            (padding: EdgeInsets.all(5.0),
-              child:
-              Column(
-                children: <Widget>[
-                  new Container(
-                    padding:EdgeInsets.all(5.0),
-                    child: new SizedBox(
-                        width: double.infinity,
-                        //  child: new Center(
-                        child:  new DropdownButton(
+          Column(
+            children: <Widget>[
+              //  new Text('Class',style: TextStyle(color: Colors.black,fontWeight: FontWeight.bold,fontSize: 15.0),textAlign: TextAlign.start,),
+              new Container(
+                padding:EdgeInsets.all(5.0),
+                child: new SizedBox(
+                    width: double.infinity,
+                    //  child: new Center(
+                    child:  new DropdownButton(
 
-                          value: _selectClass,
-                          items: _dropDownMenuItemsClass,
-                          onChanged: changedDropDownItemClass,
-                        )
-                      // ),
-                    ),
-                    // margin: EdgeInsets.only(left: 15.0),
-                    decoration: ShapeDecoration(
-                      shape: RoundedRectangleBorder(
-                        side: BorderSide(width: 1.0, style: BorderStyle.none),
-                        borderRadius: BorderRadius.all(Radius.circular(5.0)),
-                      ),
-                    ),
+                      value: _selectClass,
+                      items: _dropDownMenuItemsClass,
+                      onChanged: changedDropDownItemClass,
+                    )
+                  // ),
+                ),
+                // margin: EdgeInsets.only(left: 15.0),
+                decoration: ShapeDecoration(
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(width: 1.0, style: BorderStyle.none),
+                    borderRadius: BorderRadius.all(Radius.circular(5.0)),
                   ),
-                  SizedBox(height: 20.0,),
-                  new Container(
-                    //padding:EdgeInsets.all(12.0),
-                    child: new SizedBox(
-                        width: double.infinity,
-                        //  child: new Center(
-                        child:  new DropdownButton(
-                          value: _selectedFruit,
-                          items: _dropDownMenuItems,
-                          onChanged: changedDropDownItem,
-                        )
-                      // ),
-                    ),
-                    // margin: EdgeInsets.only(left: 15.0),
-                  ),
-                  ListView.builder(
-                    physics: PageScrollPhysics(),
-                    shrinkWrap: true,
+                ),
+              ),
 
-                    itemBuilder: (BuildContext context, int index) {
-                      return Padding(
-                        padding: EdgeInsets.all(2.0),
+              isLoading
+                  ? Center(
+                  child: new Container(
+                    child: CircularProgressIndicator(
+                      valueColor: new AlwaysStoppedAnimation(Colors.green),
+                      strokeWidth: 5.0,
+                      semanticsLabel: 'is Loading',
+                    ),
+                  ))
+                  : ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: listForDetail.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return new GestureDetector(
+                      child: Container(
                         child: Container(
-                          child: Container(
-                            margin: EdgeInsets.all(2.0),
-                            child: Card(
-                              child: Column(
+                          margin: EdgeInsets.all(2.0),
+                          child: Card(
+                            child: new Container(
+                              margin:
+                              EdgeInsets.fromLTRB(5.0, 7.0, 20.0, 0.0),
+                              child: new Row(
                                 children: <Widget>[
-
-
-
-                                  new Container(
-                                    margin: EdgeInsets.all(5.0),
-                                    alignment: Alignment.topLeft,
-                                    child: new Text(
-                                      'Name : ${lis[index].fname} ${lis[index].lname}',
-                                      style: TextStyle(
-                                          fontSize: 15.0,
-                                          color: Colors.black,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-
-
-                                  new Row(
-                                    children: <Widget>[
-                                      new Container(
-                                        margin: EdgeInsets.fromLTRB(
-                                            5.0, 0.0, 0.0, 0.0),
-                                        alignment: Alignment.topLeft,
-                                        child: new Text(
-                                          'Class No : ',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                      new Container(
-                                        margin: EdgeInsets.all(5.0),
-                                        alignment: Alignment.topLeft,
-                                        child: new Text('${lis[index].classno} ',
-                                          style: TextStyle(
-                                              fontSize: 15.0,
-                                              color: Colors.grey,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  new Container(
-                                    child: new Row(
-                                      mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                      children: <Widget>[
-                                        new Row(
-                                          children: <Widget>[
-                                            new Container(
-                                              margin: EdgeInsets.all(
-                                                  5.0),
-                                              alignment: Alignment.topLeft,
-                                              child: new Text(
-                                                'Fees Status :',
-                                                style: TextStyle(
-                                                    fontSize: 15.0,
-                                                    color: Colors.grey,
-                                                    fontWeight: FontWeight.bold),
+                                  new Expanded(
+                                      child: Column(
+                                        children: <Widget>[
+                                          new Container(
+                                            margin: EdgeInsets.fromLTRB(
+                                                10.0, 0.0, 0.0, 0.0),
+                                            alignment: Alignment.topLeft,
+                                            child: new Text(
+                                              listForDetail[index].fname,
+                                              style: TextStyle(
+                                                fontSize: 18.0,
+                                                color: Colors.green,
+                                                fontWeight: FontWeight.bold,
                                               ),
+                                              textAlign: TextAlign.right,
                                             ),
-                                            new GestureDetector(
-                                              onTap: ()  {
-                                                /*if(lis[index].feestatus=="1"){
-                                                    Fluttertoast.showToast(
-                                                        msg: "Already Exists",
-                                                        toastLength: Toast.LENGTH_SHORT,
-                                                        gravity: ToastGravity.BOTTOM,
-                                                        timeInSecForIos: 1,
-                                                        backgroundColor: Colors.green,
-                                                        textColor: Colors.white,
-                                                        fontSize: 16.0);
-                                                  }else{
-
-                                                  }
-*/
-                                              },
-                                              child: new Container(
-                                                margin: EdgeInsets.all(
-                                                    5.0),
-                                                alignment: Alignment.topRight,
-                                                child: Text('${lis[index].feedback}',
-                                                  style: TextStyle(
-                                                      fontSize: 15.0,
-                                                      color: Colors.grey,
-                                                      fontWeight: FontWeight.bold),),
-                                              ),
+                                          ),
+                                          new Container(
+                                            margin: EdgeInsets.fromLTRB(
+                                                10.0, 2.0, 0.0, 7.0),
+                                            alignment: Alignment.topLeft,
+                                            child: new Text(
+                                              listForDetail[index].mobile,
+                                              style: TextStyle(
+                                                  fontSize: 14.0,
+                                                  color: Colors.black87,
+                                                  fontWeight:
+                                                  FontWeight.normal),
                                             ),
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
+                                          ),
+                                        ],
+                                      ))
                                 ],
                               ),
                             ),
                           ),
                         ),
+                      ),
+                      onTap: () {
+                        Navigator.push(
+                            context,
+                            new MaterialPageRoute(
+                                builder: (BuildContext context) =>
+                                    FeedbackStatus(name : name,title : '${listForDetail[index].fname}',id :'${listForDetail[index].documentId }')));
+                      },
+                    );
+                  }),
 
-                        //   ),
-                      );
-                    },
-                    itemCount: lis.length,
-                  ),
-                ],
-              )
-
+            ],
           ),
         ),
       ),

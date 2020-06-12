@@ -280,34 +280,35 @@ class _RegistrationState extends State<Registration> {
           .getDocuments()
           .then((QuerySnapshot snapshot) {
         snapshot.documents.forEach((f) =>
-           list.add( Institute(id: f.data['id'],name: f.data['name'],city: f.data['city'],state:f.data['state'],country:f.data['country'],pincode:f.data['pincode'] ,address:f.data['address'] )));
+           list.add( Institute(id: f.data['id'].toString(),name: f.data['name'].toString(),city: f.data['city'].toString(),state:f.data['state'].toString(),country:f.data['country'].toString(),pincode:f.data['pincode'] .toString(),address:f.data['address'].toString() )));
 
             _dropDownMenuItems = buildAndGetDropDownMenuItems(list);
             _dropDownMenuItemsCountry  = buildAndGetDropDownMenuItemsCountry(countrylist);
             _dropDownMenuItemsCity = buildAndGetDropDownMenuItemsCity(citylist);
             _dropDownMenuItemsClass = buildAndGetDropDownMenuItemsClass(classlist);
-            _dropDownMenuItemsState = buildAndGetDropDownMenuItemsState(statelist);
 
             _selectedFruit = _dropDownMenuItems[0].value;
             _selectClass = _dropDownMenuItemsClass[0].value;
             _selectCity = _dropDownMenuItemsCity[0].value;
-            _selectState = _dropDownMenuItemsState[0].value;
             _selectCountry = _dropDownMenuItemsCountry[0].value;
+        Firestore.instance
+            .collection(Constants.LOCATION_TABLE)
+            .getDocuments()
+            .then((QuerySnapshot snapshot) {
+          snapshot.documents.forEach((s) =>
+              statelist.add( Institute(documentId: s.documentID.toString(),id: '2',name: s.data['state'].toString(),city: '',state:'',country:'',pincode:'' ,address:'' )));
+          _dropDownMenuItemsState = buildAndGetDropDownMenuItemsState(statelist);
+          _selectState = _dropDownMenuItemsState[0].value;
 
-        setState(() {
-          isLoading = false;
+          setState(() {
+            isLoading = false;
 
+          });
         });
-      });
-
-    Firestore.instance
-          .collection(Constants.LOCATION_TABLE)
-          .getDocuments()
-          .then((QuerySnapshot snapshot) {
-        snapshot.documents.forEach((s) =>
-            statelist.add( Institute(documentId: s.documentID,id: '2',name: s.data['state'],city: '',state:'',country:'',pincode:'' ,address:'' )));
 
       });
+
+
 
     }catch(e){
       print(e.toString());
@@ -324,7 +325,7 @@ void city(String documnetId){
       .getDocuments()
       .then((QuerySnapshot snapshot) {
     snapshot.documents.forEach((c) =>
-        citylist.add( Institute(documentId:c.documentID,id: '2',name: c.data['city'],city: '',state:'',country:'',pincode:'' ,address:'' )));
+        citylist.add( Institute(documentId:c.documentID.toString(),id: '2',name: c.data['city'].toString(),city: '',state:'',country:'',pincode:'' ,address:'' )));
     _dropDownMenuItemsCity = buildAndGetDropDownMenuItemsCity(citylist);
     _selectCity = _dropDownMenuItemsCity[0].value;
     setState(() {

@@ -6,6 +6,8 @@ class UserPreferences{
  static final String USER_FCM="USER_FCM";
  static final String USER_PHOTO="USER_PHOTO";
  static final String USER_MOBILE="USER_MOBILE";
+ static final String USER_INSTITUTE="USER_INSTITUTE";
+ static final String USER_CLASS="USER_CLASS";
  static final String LOGIN_STATUS="LOGIN_STATUS";
  static final String USER_TOKEN="USER_TOKEN";
 }

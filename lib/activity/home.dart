@@ -49,18 +49,24 @@ class _HomeState extends State<Home> {
       data.documents.forEach((f) => //print('Usernamea ${f["name"]}')
 
       //status=doc["status"]
-      list.add(UserData(id: f.data['id'],
-          fname: f.data['fname'],
-          lname: f.data['lname'],
-          email: f.data['email'],
-          city: f.data['city'],
-          state: f.data['state'],
-          country: f.data['country'],
-          pincode: f.data['pincode'],
-          address1: f.data['address1'],
-          address2: f.data['address2'],
-          type: f.data['type'],
-          status: f.data['status']))
+      list.add(UserData(id: f.data['id'].toString(),
+          fname: f.data['fname'].toString(),
+          lname: f.data['lname'].toString(),
+          email: f.data['email'].toString(),
+          city: f.data['city'].toString(),
+          state: f.data['state'].toString(),
+          country: f.data['country'].toString(),
+          pincode: f.data['pincode'].toString(),
+          address1: f.data['address1'].toString(),
+          address2: f.data['address2'].toString(),
+          LastFeesMonth:  f.data['LastFeesMonth'].toString(),
+          LastFeesPaid:  f.data['LastFeesPaid'].toString(),
+          NextFeesMonth: f.data['NextFeesMonth'].toString(),
+          NextFeesPaid: f.data['NextFeesPaid'].toString(),
+          LastFeesYear: f.data['LastFeesYear'].toString(),
+          NextFeesYear: f.data['NextFeesYear'].toString(),
+          type: f.data['type'].toString(),
+          status: f.data['status'].toString()))
       );
       setState(() {
         isLoading=false;
@@ -72,30 +78,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     Constants.applicationContext =context;
-   /* return new Scaffold(
-      appBar: AppBar(
-        actions: <Widget>[
-          IconButton(
-            icon: Icon(Icons.power_settings_new),
-            onPressed: () async {
-              await auth.signOut();
-              prefs = await SharedPreferences.getInstance();
-              prefs.setString(UserPreferences.LOGIN_STATUS, "FALSE");
-              Navigator.pushReplacement(context,
-                  new MaterialPageRoute(
-                      builder: (BuildContext context) => Login()));
-            },
-          )
 
-        ],
-        automaticallyImplyLeading: false,
-        title: Text(Constants.APPLICATION_NAME),
-        centerTitle: true,
-        backgroundColor: Colors.green,
-      ),
-      body:
-      NotificationList(),
-    );*/
     if(isLoading==false) {
       if (list.length != 0) {
         if (list[0].status == "0") {
@@ -155,7 +138,7 @@ class _HomeState extends State<Home> {
           );
         } else {
           return new Scaffold(
-            appBar: AppBar(
+           /* appBar: AppBar(
               actions: <Widget>[
                 IconButton(
                   icon: Icon(Icons.power_settings_new),
@@ -175,15 +158,15 @@ class _HomeState extends State<Home> {
               title: Text(Constants.APPLICATION_NAME),
               centerTitle: true,
               backgroundColor: Colors.green,
-            ),
+            ),*/
             body:
-            NotificationList(),
+            NotificationList(listForDetail: list[0],),
           );
         }
         }
       } else {
         return new Scaffold(
-            appBar: AppBar(
+           /* appBar: AppBar(
               actions: <Widget>[
                 IconButton(
                   icon: Icon(Icons.power_settings_new),
@@ -202,7 +185,7 @@ class _HomeState extends State<Home> {
               title: Text(Constants.APPLICATION_NAME),
               centerTitle: true,
               backgroundColor: Colors.green,
-            ),
+            ),*/
             body: Center(
                 child: new Container(
                   child:

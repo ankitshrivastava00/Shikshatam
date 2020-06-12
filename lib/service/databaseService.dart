@@ -39,8 +39,19 @@ class DatabaseService {
       'feedback': '',
     });
   }
-
+/*
   // add institue for admin
+  Future insertFees(String name,String year,String state,String country,String pincode,String address) async {
+    return  await instituteCollection.document(year).setData({
+      'name': name,
+      'city': city,
+      'state': state,
+      'country': country,
+      'pincode': pincode,
+      'address': address,
+    });
+  }*/
+ // add institue for admin
   Future insertInstitute(String name,String city,String state,String country,String pincode,String address) async {
     return  await instituteCollection.document().setData({
       'name': name,
